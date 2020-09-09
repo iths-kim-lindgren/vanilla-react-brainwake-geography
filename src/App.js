@@ -1,10 +1,10 @@
 import React from 'react';
 import './App.css';
-import Map from './components/Map'
+import RouterComp from './components/Router'
 
 function App() {
   return (
-    <Routes></Routes>
+    <RouterComp></RouterComp>
   );
 }
 
