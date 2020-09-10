@@ -11,8 +11,11 @@ const StartingScreen = props => {
     const numbersOption = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     useEffect(() => {
-        console.log("hej")
-    }, [unit, continent, numProblems])
+        // setUnit(unit)
+        // setContinent(continent)
+        // setNumProblems(numProblems)
+        console.log("useEffect har körts")
+    }, [])
 
     return (
         <section>
