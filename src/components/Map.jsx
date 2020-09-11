@@ -6,9 +6,9 @@ import * as topojson from 'topojson';
 const Map = props => {
 
     // const [possibleCountries, setPossibleCountries] = useState(null)
-    // const [targetCountries, setTargetCountries] = useState(null)
+    const [targetCountryText, setTargetCountryText] = useState("Click on ")
     // const [possibleCities, setPossibleCities] = useState(null)
-    const [targetCities, setTargetCities] = useState(null)
+    // const [targetCities, setTargetCities] = useState(null)
     const [data, setData] = useState(null)
 
     const d3Container = useRef(null);
@@ -66,11 +66,11 @@ const Map = props => {
             const cities = topojson.feature(topology, topology.objects.bar).features
             // const countries = topojson.feature(data, data.objects.ne_110m_admin_0_countries1).features
 
-            let targetCountries = countries
-            console.log(cities)
+            let targetCountries = countries /* to be filtered */
+            console.log(countries)
             let targetCities = cities.filter(city => city.properties.FEATURECLA === "Admin-0 capital" && city.properties.TIMEZONE.includes("Europe"))
             console.log(targetCities)
-            // selectCountry()
+            selectCountry(targetCountries)
 
             let combined = d3.merge([countries, cities])
             console.log(combined)
@@ -101,19 +101,20 @@ const Map = props => {
                 })
 
         };
-        function selectCountry() {
-            if (targetCities.length == 0) {
+        function selectCountry(targetCountries) {
+            if (targetCountries.length === 0) {
                 document.querySelector("h2").innerText = `Solved it in ${time} seconds!`
                 clearInterval(countUp)
                 return
             }
-            let rand = Math.floor(Math.random() * targetCities.length)
-            console.log(targetCities)
-            for (let country in targetCities) {
-                targetCities[country].targetCity = false
-                if (country == rand) {
-                    targetCities[country].targetCity = true
-                    document.querySelector("h2").innerText = `Click on ${targetCities[country].properties.NAME}`
+            let rand = Math.floor(Math.random() * targetCountries.length)
+            console.log(targetCountries)
+            for (let country in targetCountries) {
+                targetCountries[country].targetCountry = false
+                if (country === rand) {
+                    targetCountries[country].targetCountry = true
+                    setTargetCountryText(`Click on ${targetCountries[country].properties.admin}`)
+                    // document.querySelector("h2").innerText = `Click on ${targetCountries[country].properties.admin}`
                 }
             }
         }
@@ -121,8 +122,8 @@ const Map = props => {
 
     return (
         <div>
-            <h3></h3>
-            <h2></h2>
+            <h3>{targetCountryText}</h3>
+            <h2>{time}</h2>
             <svg
                 className="d3-component"
                 width={4000}
