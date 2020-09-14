@@ -1,21 +1,34 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
 import Map from './Map';
+import * as WorldMap from './../maps/world.geo.json'
 
 const StartingScreen = props => {
 
     const [unit, setUnit] = useState("countries")
-    const [continent, setContinent] = useState("africa")
+    const [continent, setContinent] = useState("Africa")
     const [numProblems, setNumProblems] = useState(1)
-
-    const numbersOption = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    const [numbersOption, setNumbersOption] = useState([])
 
     useEffect(() => {
-        // setUnit(unit)
-        // setContinent(continent)
-        // setNumProblems(numProblems)
-        console.log("useEffect har körts")
+        let arr = []
+        let initCountries = WorldMap.default.features.filter(country => country.properties.continent === continent)
+        for (let index in initCountries){
+            arr.push(parseInt(index) + 1)
+        }
+        setNumbersOption(arr)
     }, [])
+
+    const handleNumProblems = (continent) => {
+        let arr = []
+        let countries = WorldMap.default.features.filter(country => country.properties.continent === continent)
+        console.log(countries)
+        for (let index in countries){
+            arr.push(parseInt(index) + 1)
+        }
+        setNumbersOption(arr)
+    }
+    // DESSA TVÅ OVAN BORDE GÅ ATT SLÅ IHOP!
 
     return (
         <section>
@@ -24,12 +37,12 @@ const StartingScreen = props => {
                     <option value="countries">Countries</option>
                     <option value="capitals">Capitals</option>
                 </select>
-                <select onChange={e => setContinent(e.currentTarget.value)}>
-                    <option value="africa">Africa</option>
-                    <option value="asia">Asia</option>
-                    <option value="europe">Europe</option>
-                    <option value="north-america">North America</option>
-                    <option value="south-america">South America</option>
+                <select onChange={e => {setContinent(e.currentTarget.value); handleNumProblems(e.currentTarget.value)}}>
+                    <option value="Africa">Africa</option>
+                    <option value="Asia">Asia</option>
+                    <option value="Europe">Europe</option>
+                    <option value="North America">North America</option>
+                    <option value="South America">South America</option>
                 </select>
                 <select onChange={e => setNumProblems(e.currentTarget.value)}>
                     {numbersOption.map(num => (
@@ -52,7 +65,6 @@ const StartingScreen = props => {
                 <Link to="/Map"><button>Begin</button></Link>
                 <Switch>
                     <Route path="/Map">
-                        <Map></Map>
                         <Map unit={unit} continent={continent} numProblems={numProblems}></Map>
                     </Route>
                 </Switch>

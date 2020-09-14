@@ -15,3 +15,6 @@ svg {
 div.text-container {
   position: fixed
 }
+.fixed {
+  position: fixed;
+}

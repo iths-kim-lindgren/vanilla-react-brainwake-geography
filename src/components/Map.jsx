@@ -5,16 +5,12 @@ import * as topojson from 'topojson';
 
 const Map = props => {
 
-    // const [possibleCountries, setPossibleCountries] = useState(null)
-    const [targetCountryText, setTargetCountryText] = useState("Click on ")
-    // const [possibleCities, setPossibleCities] = useState(null)
-    // const [targetCities, setTargetCities] = useState(null)
+    const [targetCountryText, setTargetCountryText] = useState("")
     const [data, setData] = useState(null)
+    const [time, setTime] = useState(0)
+    const [solved, setSolved] = useState(false)
 
     const d3Container = useRef(null);
-
-
-    console.log(props)
 
     var margin = { top: 20, left: 50, right: 50, bottom: 50 },
         height = 4000 - margin.top - margin.bottom,
@@ -41,43 +37,74 @@ const Map = props => {
     var path = d3.geoPath()
         .projection(projection)
 
-    var time = 0
-    var countUp = setInterval(function () {
-        time++
-        // document.querySelector("h3").innerText = `Time: ${time} seconds`
-    }, 1000)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTime(time => time + 1)
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [solved]);
 
-    /* This would be called on initial page load */
     useEffect(() => {
         Promise.all([d3.json("./assets/world.geo.json"), d3.json("./assets/capitals.geojson")])
             .then(data => {
                 setData(data);
-                console.log(data)
             })
     }, [])
 
-
-    /* This would be called when store/state data is updated */
     useEffect(() => {
         if (data) {
-            var topology = topojson.topology({ foo: data[0], bar: data[1] });
 
-            const countries = topojson.feature(topology, topology.objects.foo).features
-            const cities = topojson.feature(topology, topology.objects.bar).features
-            // const countries = topojson.feature(data, data.objects.ne_110m_admin_0_countries1).features
+            // RENDER WORLD MAP
+            if (props.unit == "countries"){
+                var topology = topojson.topology({foo: data[0]});
+                // var countries = topojson.feature(data, data.objects.world.geo.json).features
+                var countries = topojson.feature(topology, topology.objects.foo).features
+                setData(countries)
+                console.log("countries", countries)
+                console.log("data", data)
 
-            let targetCountries = countries /* to be filtered */
-            console.log(countries)
-            let targetCities = cities.filter(city => city.properties.FEATURECLA === "Admin-0 capital" && city.properties.TIMEZONE.includes("Europe"))
-            console.log(targetCities)
+            } else if (props.unit === "cities"){
+                var topology = topojson.topology({ foo: data[0], bar: data[1] });
+                var countries = topojson.feature(topology, topology.objects.foo).features
+                var cities = topojson.feature(topology, topology.objects.bar).features
+                var combined = d3.merge([countries, cities])
+                setData(combined)
+            }
+
+            // INIT SELECTION LOGIC
+            console.log("countries", countries)
+            let targetCountries = countries.filter(country => country.properties.continent === props.continent) /* to be filtered */
+            
+            let randomNumberArray = []
+            for (let i = 0; i<parseInt(props.numProblems); i++){
+
+                // deklarera en rand, pusha till listan om den inte redan finns i listan
+                let rand = Math.floor(Math.random() * targetCountries.length);
+                if (!!!randomNumberArray.includes(rand)){
+                    randomNumberArray.push(rand)
+                } else {
+                    // om den redan finns i listan, ändra dess värde tills den har ett värde som inte finns i listan
+                    do {
+                        rand = Math.floor(Math.random() * targetCountries.length);
+                    } while (randomNumberArray.includes(rand));
+                    randomNumberArray.push(rand)
+                } 
+            }
+            // uppdatera targetCountries så att bara de som motsvarar ett index i listan blir kvar
+            let placeholderCountryArr = []
+            for (let num of randomNumberArray){
+                placeholderCountryArr.push(targetCountries[num])
+            }
+            targetCountries = placeholderCountryArr
+            
+            if (props.unit === "cities"){
+                var targetCities = cities.filter(city => city.properties.FEATURECLA === "Admin-0 capital" && city.properties.TIMEZONE.includes("Europe"))
+            }
+            // console.log(targetCities)
             selectCountry(targetCountries)
 
-            let combined = d3.merge([countries, cities])
-            console.log(combined)
-
-
             svg.selectAll(".country")
-                .data(combined) /* binder selectAll till enter() */
+                .data(data) /* binder selectAll till enter() */
                 .enter().append("path")
                 .attr("class", "country")
                 .attr("d", path)
@@ -90,12 +117,12 @@ const Map = props => {
                 .on("click", function (d) {
                     d3.selectAll(".country")
                         .classed("selected", false)
-                    if (d.targetCity && !d.previousTarget) {
-                        let index = targetCountries.indexOf(d)
-                        d.previousTarget = true
+                    if (d.currentTarget.__data__.targetCountry && !d.previousTarget) {
+                        let index = targetCountries.indexOf(d.currentTarget.__data__)
+                        d.currentTarget.__data__.previousTarget = true
 
                         targetCountries.splice(index, 1)
-                        selectCountry()
+                        selectCountry(targetCountries)
                     }
                     d3.select(this).classed("selected", true)
                 })
@@ -103,18 +130,16 @@ const Map = props => {
         };
         function selectCountry(targetCountries) {
             if (targetCountries.length === 0) {
-                document.querySelector("h2").innerText = `Solved it in ${time} seconds!`
-                clearInterval(countUp)
+                setSolved(true)
                 return
             }
             let rand = Math.floor(Math.random() * targetCountries.length)
             console.log(targetCountries)
             for (let country in targetCountries) {
                 targetCountries[country].targetCountry = false
-                if (country === rand) {
+                if (+country === rand) {
                     targetCountries[country].targetCountry = true
                     setTargetCountryText(`Click on ${targetCountries[country].properties.admin}`)
-                    // document.querySelector("h2").innerText = `Click on ${targetCountries[country].properties.admin}`
                 }
             }
         }
@@ -122,8 +147,10 @@ const Map = props => {
 
     return (
         <div>
-            <h3>{targetCountryText}</h3>
-            <h2>{time}</h2>
+            <article className="fixed">
+                <h3>{targetCountryText}</h3>
+                <h2>{(solved ? `Solved it in ${time} seconds!` : time)}</h2>
+            </article>
             <svg
                 className="d3-component"
                 width={4000}

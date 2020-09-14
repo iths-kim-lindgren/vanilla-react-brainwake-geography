@@ -16,7 +16,6 @@ const RouterComp = props => {
                 </Route>
                 <Route path="/">
                     <StartingScreen></StartingScreen>
-                    {/* <Map></Map> */}
                 </Route>
             </Switch>
         </Router>
