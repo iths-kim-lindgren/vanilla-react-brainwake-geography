@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
 import Map from './Map';
 import * as WorldMap from './../maps/world.geo.json'
+import * as Capitals from './../maps/fewer-capitals.geojson'
 
 const StartingScreen = props => {
 
@@ -21,9 +22,15 @@ const StartingScreen = props => {
 
     const handleNumProblems = (continent) => {
         let arr = []
-        let countries = WorldMap.default.features.filter(country => country.properties.continent === continent)
-        console.log(countries)
-        for (let index in countries){
+        let units = []
+        /* console.log(WorldMap) console.log(Capitals) VARFÖR SKILLNADEN MELLAN DESSA LOGGAR */
+        // if (unit === "countries"){
+        //     units = WorldMap.default.features.filter(country => country.properties.continent === continent)
+        // } else if (unit ==="capitals") {
+        //     units = Capitals.default.features.filter(country => country.properties.continent === continent)
+        // }
+        units = WorldMap.default.features.filter(country => country.properties.continent === continent)
+        for (let index in units){
             arr.push(parseInt(index) + 1)
         }
         setNumbersOption(arr)
@@ -43,6 +50,7 @@ const StartingScreen = props => {
                     <option value="Europe">Europe</option>
                     <option value="North America">North America</option>
                     <option value="South America">South America</option>
+                    <option value="Oceania">Oceania</option>
                 </select>
                 <select onChange={e => setNumProblems(e.currentTarget.value)}>
                     {numbersOption.map(num => (

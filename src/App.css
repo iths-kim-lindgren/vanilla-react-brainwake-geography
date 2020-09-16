@@ -10,11 +10,14 @@ svg {
   fill: grey;
 }
 .selected {
-  fill: blue;
+  fill: red;
 }
 div.text-container {
   position: fixed
 }
 .fixed {
   position: fixed;
+}
+.previousTarget {
+  fill: blue;
 }
