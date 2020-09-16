@@ -6,7 +6,7 @@ import * as topojson from 'topojson';
 const Map = props => {
 
     const [targetCountryText, setTargetCountryText] = useState("")
-    const [data, setData] = useState(null)
+    const [files, setFiles] = useState(null)
     const [time, setTime] = useState(0)
     const [solved, setSolved] = useState(false)
 
@@ -46,33 +46,31 @@ const Map = props => {
 
     useEffect(() => {
         Promise.all([d3.json("./assets/world.geo.json"), d3.json("./assets/capitals.geojson")])
-            .then(data => {
-                setData(data);
+            .then(files => {
+                setFiles(files);
             })
     }, [])
 
     useEffect(() => {
-        if (data) {
+        if (files) {
+            console.log(props)
 
             // RENDER WORLD MAP
             if (props.unit == "countries"){
-                var topology = topojson.topology({foo: data[0]});
+                var topology = topojson.topology({foo: files[0]});
                 // var countries = topojson.feature(data, data.objects.world.geo.json).features
                 var countries = topojson.feature(topology, topology.objects.foo).features
-                setData(countries)
-                console.log("countries", countries)
-                console.log("data", data)
+                var actualData = countries
 
-            } else if (props.unit === "cities"){
-                var topology = topojson.topology({ foo: data[0], bar: data[1] });
+            } else if (props.unit === "capitals"){
+                var topology = topojson.topology({ foo: files[0], bar: files[1] });
                 var countries = topojson.feature(topology, topology.objects.foo).features
                 var cities = topojson.feature(topology, topology.objects.bar).features
-                var combined = d3.merge([countries, cities])
-                setData(combined)
+                var actualData = d3.merge([countries, cities])
             }
 
             // INIT SELECTION LOGIC
-            console.log("countries", countries)
+            cities ?
             let targetCountries = countries.filter(country => country.properties.continent === props.continent) /* to be filtered */
             
             let randomNumberArray = []
@@ -104,7 +102,7 @@ const Map = props => {
             selectCountry(targetCountries)
 
             svg.selectAll(".country")
-                .data(data) /* binder selectAll till enter() */
+                .data(actualData) /* binder selectAll till enter() */
                 .enter().append("path")
                 .attr("class", "country")
                 .attr("d", path)
@@ -143,7 +141,7 @@ const Map = props => {
                 }
             }
         }
-    }, [data]);
+    }, [files]);
 
     return (
         <div>
