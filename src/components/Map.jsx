@@ -11,6 +11,7 @@ const Map = props => {
     const [map, setMap] = useState(null)
     const [targetUnits, setTargetUnits] = useState(null)
     const [currentTargetUnit, setCurrentTargetUnit] = useState(null)
+    const [previousTargets, setPreviousTargets] = useState(null)
     const [targetUnitText, setTargetUnitText] = useState("")
     const [time, setTime] = useState(0)
     const [solved, setSolved] = useState(false)
@@ -177,12 +178,14 @@ const Map = props => {
     function handleRightAnswer(d, targetUnits) {
         console.log(d, targetUnits)
         let index = targetUnits.indexOf(d.currentTarget.__data__)
-        d.currentTarget.__data__.previousTarget = true
-        // RADEN OVAN UNDEFINED - FORTSÄTT HÄR
-        // d3.select(d.currentTarget).classed("previousTarget", true)
+        
         console.log("handleAnswer", targetUnits)
-        setTargetUnits(targetUnits.splice(index, 1))
+        let updatedArr = targetUnits.filter(unit => unit.index !== index)
+        // FORTSÄTT HÄR: DET FINNS INGEN INDEX PÅ UNIT
+        setTargetUnits(updatedArr)
+        
         console.log("handleAnswer after setTargetUnits", targetUnits)
+        
     }
 
     // function selectUnit(targetUnits) {

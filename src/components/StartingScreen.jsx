@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
 import Map from './Map';
 import * as WorldMap from './../maps/world.geo.json'
-import * as Capitals from './../maps/fewer-capitals.geojson'
+import * as Capitals from './../maps/fewer-capitals.geo.json'
 
 const StartingScreen = props => {
 
@@ -23,14 +23,14 @@ const StartingScreen = props => {
     const handleNumProblems = (continent) => {
         let arr = []
         let units = []
-        /* console.log(WorldMap) console.log(Capitals) VARFÖR SKILLNADEN MELLAN DESSA LOGGAR */
-        // if (unit === "countries"){
-        //     units = WorldMap.default.features.filter(country => country.properties.continent === continent)
-        // } else if (unit ==="capitals") {
-        //     console.log(Capitals)
-        //     units = Capitals.default.features.filter(city => city.properties.continent === continent)
-        // }
-        units = WorldMap.default.features.filter(country => country.properties.continent === continent)
+        if (unit === "countries"){
+            units = WorldMap.default.features.filter(country => country.properties.continent === continent)
+            console.log(WorldMap)
+        } else if (unit ==="capitals") {
+            console.log(Capitals)
+            units = Capitals.default.features.filter(city => city.properties.continent === continent)
+        }
+        // units = WorldMap.default.features.filter(country => country.properties.continent === continent)
         for (let index in units){
             arr.push(parseInt(index) + 1)
         }
