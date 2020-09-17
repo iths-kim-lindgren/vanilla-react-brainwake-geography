@@ -27,7 +27,8 @@ const StartingScreen = props => {
         // if (unit === "countries"){
         //     units = WorldMap.default.features.filter(country => country.properties.continent === continent)
         // } else if (unit ==="capitals") {
-        //     units = Capitals.default.features.filter(country => country.properties.continent === continent)
+        //     console.log(Capitals)
+        //     units = Capitals.default.features.filter(city => city.properties.continent === continent)
         // }
         units = WorldMap.default.features.filter(country => country.properties.continent === continent)
         for (let index in units){

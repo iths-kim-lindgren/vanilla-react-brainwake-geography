@@ -5,12 +5,17 @@ import * as topojson from 'topojson';
 
 const Map = props => {
 
-    const [targetCountryText, setTargetCountryText] = useState("")
     const [files, setFiles] = useState(null)
-    const [time, setTime] = useState(0)
-    const [solved, setSolved] = useState(false)
     const [actualData, setActualData] = useState(null)
     const [countriesOrCities, setCountriesOrCities] = useState(null)
+    const [map, setMap] = useState(null)
+    const [targetUnits, setTargetUnits] = useState(null)
+    const [currentTargetUnit, setCurrentTargetUnit] = useState(null)
+    const [targetUnitText, setTargetUnitText] = useState("")
+    const [time, setTime] = useState(0)
+    const [solved, setSolved] = useState(false)
+    const [clickedCountry, setClickedCountry] = useState(null)
+    // const [wrongGuesses, setWrongGuesses] = useState(0)
 
     const d3Container = useRef(null);
 
@@ -53,9 +58,8 @@ const Map = props => {
             })
     }, [])
 
-
     useEffect(() => {
-        if (files) {
+        if (!files) return
             console.log(props)
 
             // RENDER COUNTRIES AND CITIES, OR JUST COUNTRIES
@@ -66,37 +70,40 @@ const Map = props => {
             } else if (props.unit === "capitals") {
                 let topology = topojson.topology({ foo: files[0], bar: files[1] });
                 let countries = topojson.feature(topology, topology.objects.foo).features
-                let cities = topojson.feature(topology, topology.objects.bar).features
+                console.log(topojson.feature(topology, topology.objects.bar).features[0].properties.continent)
+                let cities = topology.objects.bar.geometries.filter(feature => feature.properties.continent.includes(props.continent))
+                console.log(cities)
+                // let cities = topojson.feature(topology, topology.objects.bar).features
                 setActualData(d3.merge([countries, cities]))
             }
-        }
-
     }, [files])
 
     useEffect(() => {
         // SELECT COUNTRIES OR CITIES AS TARGETS
-        if (actualData){
+        if (!actualData) return
             console.log(actualData)
-            if (actualData.length > 250){
-                let cities = actualData.filter(city => city.properties.city)
-                console.log(cities)
+            if (actualData.find(el => el.properties.city)) {
+                let cities = actualData.filter(function (city) {
+                    if (city.properties.city && city.properties.continent) {
+                        return city.properties.continent.includes(props.continent)
+                    }
+                })
                 // cities = cities.filter = (city => city.properties.continent === props.continent)
+                console.log(cities)
                 setCountriesOrCities(cities)
             } else {
                 let countries = actualData.filter(country => country.properties.continent.includes(props.continent)) /* to be filtered */
                 setCountriesOrCities(countries)
             }
-        }
     }, [actualData])
 
     useEffect(() => {
-        if (countriesOrCities){
+        if (!countriesOrCities) return
             // SELECT SPECIFIC COUNTRIES OR CITIES TO BE TARGETED
 
-    
             let randomNumberArray = []
             for (let i = 0; i < parseInt(props.numProblems); i++) {
-    
+
                 // deklarera en rand, pusha till listan om den inte redan finns i listan
                 let rand = Math.floor(Math.random() * countriesOrCities.length);
                 if (!!!randomNumberArray.includes(rand)) {
@@ -110,22 +117,41 @@ const Map = props => {
                 }
             }
             // uppdatera targetUnits så att bara de som motsvarar ett index i listan blir kvar
-            let placeholderCountryArr = []
+            let placeholderArr = []
             for (let num of randomNumberArray) {
-                placeholderCountryArr.push(countriesOrCities[num])
+                placeholderArr.push(countriesOrCities[num])
             }
-            let targetUnits = placeholderCountryArr
-    
-            if (props.unit === "cities") {
-                // var targetCities = cities.filter(city => city.properties.FEATURECLA === "Admin-0 capital" && city.properties.TIMEZONE.includes("Europe"))
+            setTargetUnits(placeholderArr)
+    }, [countriesOrCities])
+
+    useEffect(() => {
+        if (!targetUnits) return
+        console.log(targetUnits)
+        if (targetUnits.length === 0) {
+            setSolved(true)
+            return
+        }
+        let rand = Math.floor(Math.random() * targetUnits.length)
+        console.log(targetUnits)
+        for (let unit in targetUnits) {
+            // targetUnits[unit].target = false
+            if (+unit === rand) {
+                // setTargetUnits(targetUnits[unit]).target = true
+                setCurrentTargetUnit(targetUnits[unit])
+                if (targetUnits[unit].properties.admin) {
+                    setTargetUnitText(`Click on ${targetUnits[unit].properties.admin}`)
+                } else { setTargetUnitText(`Click on ${targetUnits[unit].properties.city}`) }
             }
-            // console.log(targetCities)
-            selectCountry(targetUnits)
-    
-            svg.selectAll(".country")
+        }     
+}, [targetUnits])
+
+    useEffect(() => {
+        if (!currentTargetUnit) return
+
+            setMap(svg.selectAll(".unit")
                 .data(actualData) /* binder selectAll till enter() */
                 .enter().append("path")
-                .attr("class", "country")
+                .attr("class", "unit")
                 .attr("d", path)
                 .on("mouseover", function (d) {
                     d3.select(this).classed("targeted", true)
@@ -134,50 +160,43 @@ const Map = props => {
                     d3.select(this).classed("targeted", false)
                 })
                 .on("click", function (d) {
-                    d3.selectAll(".country")
-                        .classed("selected", false)
-                        if (d.currentTarget.__data__.properties.city){
-                            console.log(d.currentTarget.__data__.properties.city)
-                        } else { console.log(d.currentTarget.__data__.properties.admin)}
-                    if (d.currentTarget.__data__.targetCountry && !d.currentTarget.__data__.previousTarget) { 
-                        let index = targetUnits.indexOf(d.currentTarget.__data__)
-                        d.currentTarget.__data__.previousTarget = true
-                        d3.select(d.currentTarget).classed("previousTarget", true)
-    
-                        targetUnits.splice(index, 1)
-                        selectCountry(targetUnits)
-                    }
-                    d3.select(this).classed("selected", true)
-                })
-        }
+                    setClickedCountry(d.currentTarget)
+                    d3.selectAll(".unit")
+                        .classed("wrong", false)
+                    if (d.currentTarget.__data__.properties.city) {
+                        console.log(d.currentTarget.__data__.properties.city)
+                    } else { console.log(d.currentTarget.__data__.properties.admin) }
 
-        function selectCountry(targetCountries) {
-            console.log(targetCountries)
-            if (targetCountries.length === 0) {
-                setSolved(true)
-                return
-            }
-            let rand = Math.floor(Math.random() * targetCountries.length)
-            console.log(targetCountries)
-            for (let country in targetCountries) {
-                targetCountries[country].targetCountry = false
-                if (+country === rand) {
-                    targetCountries[country].targetCountry = true
-                    if (targetCountries[country].properties.admin){
-                        setTargetCountryText(`Click on ${targetCountries[country].properties.admin}`)
-                    } else { setTargetCountryText(`Click on ${targetCountries[country].properties.city}`) }
-                }
-            }
-        }
-    }, [countriesOrCities])
+                    if (d.currentTarget.__data__ === currentTargetUnit) {
+                        d3.select(this).classed("previousTarget", true)
+                        handleRightAnswer(d, targetUnits)
+                    } else { d3.select(this).classed("wrong", true) }
+                }))
+    }, [currentTargetUnit])
+
+    function handleRightAnswer(d, targetUnits) {
+        console.log(d, targetUnits)
+        let index = targetUnits.indexOf(d.currentTarget.__data__)
+        d.currentTarget.__data__.previousTarget = true
+        // RADEN OVAN UNDEFINED - FORTSÄTT HÄR
+        // d3.select(d.currentTarget).classed("previousTarget", true)
+        console.log("handleAnswer", targetUnits)
+        setTargetUnits(targetUnits.splice(index, 1))
+        console.log("handleAnswer after setTargetUnits", targetUnits)
+    }
+
+    // function selectUnit(targetUnits) {
+
+        
 
 
 
     return (
         <div>
             <article className="fixed">
-                <h3>{targetCountryText}</h3>
+                <h3>{targetUnitText}</h3>
                 <h2>{(solved ? `Solved it in ${time} seconds!` : time)}</h2>
+                <button onClick={() => handleRightAnswer(clickedCountry, targetUnits)}>Teach me</button>
             </article>
             <svg
                 className="d3-component"
