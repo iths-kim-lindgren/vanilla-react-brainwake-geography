@@ -9,7 +9,7 @@ svg {
 .targeted {
   fill: grey;
 }
-.selected {
+.wrong {
   fill: red;
 }
 div.text-container {
@@ -17,7 +17,18 @@ div.text-container {
 }
 .fixed {
   position: fixed;
+  top: 0px;
+
 }
 .previousTarget {
   fill: blue;
+}
+
+h4 {
+  margin: 0 5px;
+  color: orange;
+}
+
+button {
+  margin: 0;
 }

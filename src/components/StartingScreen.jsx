@@ -14,50 +14,59 @@ const StartingScreen = props => {
     useEffect(() => {
         let arr = []
         let initCountries = WorldMap.default.features.filter(country => country.properties.continent === continent)
-        for (let index in initCountries){
+        for (let index in initCountries) {
             arr.push(parseInt(index) + 1)
         }
         setNumbersOption(arr)
     }, [])
 
-    const handleNumProblems = (continent) => {
+    useEffect(() => {
         let arr = []
         let units = []
-        if (unit === "countries"){
+        if (unit === "countries") {
             units = WorldMap.default.features.filter(country => country.properties.continent === continent)
             console.log(WorldMap)
-        } else if (unit ==="capitals") {
+        } else if (unit === "capitals") {
             console.log(Capitals)
             units = Capitals.default.features.filter(city => city.properties.continent === continent)
         }
         // units = WorldMap.default.features.filter(country => country.properties.continent === continent)
-        for (let index in units){
+        for (let index in units) {
             arr.push(parseInt(index) + 1)
         }
         setNumbersOption(arr)
-    }
+        if (arr.length < numProblems) {
+            setNumProblems(arr.length)
+        }
+    }, [continent, unit])
     // DESSA TVÅ OVAN BORDE GÅ ATT SLÅ IHOP!
 
     return (
         <section>
             <article>
+                <button>What?</button>
                 <select onChange={e => setUnit(e.currentTarget.value)}>
                     <option value="countries">Countries</option>
                     <option value="capitals">Capitals</option>
                 </select>
-                <select onChange={e => {setContinent(e.currentTarget.value); handleNumProblems(e.currentTarget.value)}}>
+                <button>Where?</button>
+                <select onChange={e => setContinent(e.currentTarget.value)}>
                     <option value="Africa">Africa</option>
                     <option value="Asia">Asia</option>
                     <option value="Europe">Europe</option>
                     <option value="North America">North America</option>
                     <option value="South America">South America</option>
+                    {/* <option value="Middle East">Middle East</option>
+                    <option value="Caribbean">Caribbean</option> */}
                     <option value="Oceania">Oceania</option>
                 </select>
-                <select onChange={e => setNumProblems(e.currentTarget.value)}>
+                <button>How many?</button>
+                <select onChange={e => setNumProblems(e.currentTarget.value)}
+                    value={numProblems}>
                     {numbersOption.map(num => (
                         <option
-                        key={num}
-                        value={num}
+                            key={num}
+                            value={num}
                         >
                             {num}
                         </option>
@@ -65,7 +74,6 @@ const StartingScreen = props => {
                 </select>
             </article>
             <article>
-                <button>Where?</button>
                 <p>{unit}</p>
                 <p>{continent}</p>
                 <p>{numProblems}</p>
