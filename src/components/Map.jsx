@@ -33,8 +33,8 @@ const Map = props => {
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     // PROJECTION
-    var projection = d3.geoMercator()
-        // var projection = d3.geoEqualEarth() bättre men städerna blir väldigt stora
+    // var projection = d3.geoMercator()
+        var projection = d3.geoEqualEarth() 
         .translate([width / 5.5, height / 5.5])
         .scale(300)
     // .center()
@@ -178,9 +178,9 @@ const Map = props => {
         // }
         // console.log(test)
         // console.log(test._groups.__proto__.entries())
-        // console.log(test._groups[0])
-        // console.log(test._groups[0].item(0).path)
-        // console.log(test._groups[0][0]).ariaAtomic
+        console.log(test._groups[0])
+        console.log(test._groups[0].item(0))
+        console.log(test._groups[0].item(0).attributeStyleMap)
         // let test2 = Array.from(test._groups[0])
         // console.log(test2)
         // console.log(test2[0])
