@@ -20,10 +20,11 @@ const Map = props => {
     // const [wrongGuesses, setWrongGuesses] = useState(0)
 
     const d3Container = useRef(null);
+    const currentTargetPath = useRef(null)
 
     var margin = { top: 20, left: 50, right: 50, bottom: 50 },
-        height = 4000 - margin.top - margin.bottom,
-        width = 5000 - margin.left - margin.right;
+        height = 1200 - margin.top - margin.bottom,
+        width = 1800 - margin.left - margin.right;
 
     var svg = d3.select(d3Container.current)
         .append("svg")
@@ -34,14 +35,15 @@ const Map = props => {
 
     // PROJECTION
     // var projection = d3.geoMercator()
-        var projection = d3.geoEqualEarth() 
+    var projection = d3.geoEqualEarth()
         .translate([width / 5.5, height / 5.5])
-        .scale(300)
+        .scale(150)
     // .center()
 
     // geocentroid
 
-    // console.log(d3)
+
+
 
     // CREATE PATH
     var path = d3.geoPath()
@@ -53,6 +55,24 @@ const Map = props => {
         }, 1000);
         return () => clearInterval(interval);
     }, [solved]);
+
+    useEffect(() => {
+        // SET VIEW DEPENDING ON CONTINENT
+        switch (props.continent) {
+            case "Africa":
+                window.scroll(100, 250)
+                break;
+            case "Asia":
+                window.scroll(250, 150)
+                break;
+            case "Europe":
+                window.scroll(100, 50)
+                break;
+            case "North America":
+                window.scroll(0, 50)
+                break;
+        }
+    }, [])
 
     useEffect(() => {
         Promise.all([d3.json("./assets/world.geo.json"), d3.json("./assets/fewer-capitals.geojson")])
@@ -168,66 +188,58 @@ const Map = props => {
     useEffect(() => {
         if (!currentTargetUnit) return
 
-        let test = d3.selectAll(".unit")
-        // var list = test._groups[0].childNodes;
-        // console.log(list)
-
-        // Using for..of 
-        // for (var value of list.values()) {
-        //     console.log(value);
-        // }
-        // console.log(test)
-        // console.log(test._groups.__proto__.entries())
-        console.log(test._groups[0])
-        console.log(test._groups[0].item(0))
-        console.log(test._groups[0].item(0).attributeStyleMap)
-        // let test2 = Array.from(test._groups[0])
-        // console.log(test2)
-        // console.log(test2[0])
-        test.filter(unit => unit.__data__ === currentTargetUnit)
         // for the "d.currentTarget__data__" that matches currentTargetUnit, set up a new useState var
         // map.forEach(path => console.log(path))
         d3.selectAll(".unit").
             on("click", function (d) {
+                console.log(d)
                 d3.selectAll(".unit")
                     .classed("wrong", false)
-                    
-                    if (d.currentTarget.__data__ === currentTargetUnit) {
-                        d3.select(this).classed("previousTarget", true)
-                        handleRightAnswer()
-                    } else { 
-                        d3.select(this).classed("wrong", true)
-                        if (d.currentTarget.__data__.properties.city) {
-                            console.log(d.currentTarget.__data__.properties.city)
-                            setRightOrWrongText(`You clicked on ${d.currentTarget.__data__.properties.city} (${d.currentTarget.__data__.properties.country})`)
-                        } else { 
-                            console.log(d.currentTarget.__data__.properties.admin)
-                            setRightOrWrongText(`You clicked on ${d.currentTarget.__data__.properties.admin}`)
-                        }
+
+                if (d.currentTarget.__data__ === currentTargetUnit) {
+                    d3.select(this).classed("previousTarget", true)
+                    handleRightAnswer()
+                } else {
+                    d3.select(this).classed("wrong", true)
+                    if (d.currentTarget.__data__.properties.city) {
+                        console.log(d.currentTarget.__data__.properties.city)
+                        setRightOrWrongText(`You clicked on ${d.currentTarget.__data__.properties.city} (${d.currentTarget.__data__.properties.country})`)
+                    } else {
+                        console.log(d.currentTarget.__data__.properties.admin)
+                        setRightOrWrongText(`You clicked on ${d.currentTarget.__data__.properties.admin}`)
+                    }
                 }
             })
     }, [currentTargetUnit])
 
 
     function handleRightAnswer() {
-        // console.log(d)
         let index = targetUnits.indexOf(currentTargetUnit)
-        console.log("d3", d3)
-        d3.select(this)
 
-        console.log("handleAnswer", targetUnits)
         let updatedArr = []
         for (let unit in targetUnits) {
             if (+unit !== index) {
                 updatedArr.push(targetUnits[unit])
             }
         }
-        console.log(updatedArr)
+
         setRightOrWrongText(`Correct!`)
-        setTargetUnits(updatedArr)
 
-        console.log("handleAnswer after setTargetUnits", targetUnits)
+    }
 
+    function simulateClick() {
+
+        // for each index in the nodelist, if the properties are equal to the properties of currentTargetUnit, simulate a click on the path of that node
+
+        let nodelist = d3.selectAll(".unit")
+        for (let i = 0; i < nodelist._groups[0].length; i++) {
+            if (nodelist._groups[0].item(i).__data__.properties.filename === currentTargetUnit.properties.filename) {
+                console.log(nodelist._groups[0][i])
+                // logs the correct svg path element
+                // nodelist._groups[0][i].click()
+                // logs TypeError: nodelist._groups[0][i].click is not a function
+            }
+        }
     }
 
     // function selectUnit(targetUnits) {
@@ -241,7 +253,7 @@ const Map = props => {
             <article className="fixed">
                 <h4>{targetUnitText}</h4>
                 <h4>{(solved ? `Solved it in ${time} seconds!` : time)}</h4>
-                <button onClick={() => handleRightAnswer(clickedCountry, targetUnits)}>Teach me</button>
+                <button onClick={simulateClick}>Teach me</button>
                 <h4>{rightOrWrongText}</h4>
             </article>
             <svg
