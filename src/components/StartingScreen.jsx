@@ -13,7 +13,7 @@ const StartingScreen = props => {
 
     useEffect(() => {
         let arr = []
-        let initCountries = WorldMap.default.features.filter(country => country.properties.continent === continent)
+        let initCountries = WorldMap.default.features.filter(country => country.properties.continent.includes(continent))
         for (let index in initCountries) {
             arr.push(parseInt(index) + 1)
         }
@@ -24,11 +24,11 @@ const StartingScreen = props => {
         let arr = []
         let units = []
         if (unit === "countries") {
-            units = WorldMap.default.features.filter(country => country.properties.continent === continent)
+            units = WorldMap.default.features.filter(country => country.properties.continent.includes(continent))
             console.log(WorldMap)
         } else if (unit === "capitals") {
             console.log(Capitals)
-            units = Capitals.default.features.filter(city => city.properties.continent === continent)
+            units = Capitals.default.features.filter(city => city.properties.continent.includes(continent))
         }
         // units = WorldMap.default.features.filter(country => country.properties.continent === continent)
         for (let index in units) {

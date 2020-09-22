@@ -11,20 +11,22 @@ const Map = props => {
     const [map, setMap] = useState(null)
     const [targetUnits, setTargetUnits] = useState(null)
     const [currentTargetUnit, setCurrentTargetUnit] = useState(null)
-    const [previousTargets, setPreviousTargets] = useState(null)
     const [targetUnitText, setTargetUnitText] = useState("")
+    const [simulatedClick, setSimulatedClick] = useState(false)
     const [time, setTime] = useState(0)
     const [solved, setSolved] = useState(false)
-    const [clickedCountry, setClickedCountry] = useState(null)
     const [rightOrWrongText, setRightOrWrongText] = useState("")
-    // const [wrongGuesses, setWrongGuesses] = useState(0)
+    const [wrongGuesses, setWrongGuesses] = useState(0)
+    const [totalGuesses, setTotalGuesses] = useState(0)
 
     const d3Container = useRef(null);
     const currentTargetPath = useRef(null)
 
     var margin = { top: 20, left: 50, right: 50, bottom: 50 },
-        height = 1200 - margin.top - margin.bottom,
-        width = 1800 - margin.left - margin.right;
+        // height = 1200 - margin.top - margin.bottom,
+        // width = 1800 - margin.left - margin.right;
+        height = 2400 - margin.top - margin.bottom,
+        width = 3600 - margin.left - margin.right;
 
     var svg = d3.select(d3Container.current)
         .append("svg")
@@ -37,7 +39,8 @@ const Map = props => {
     // var projection = d3.geoMercator()
     var projection = d3.geoEqualEarth()
         .translate([width / 5.5, height / 5.5])
-        .scale(150)
+        // .scale(150)
+        .scale(250)
     // .center()
 
     // geocentroid
@@ -75,7 +78,7 @@ const Map = props => {
     }, [])
 
     useEffect(() => {
-        Promise.all([d3.json("./assets/world.geo.json"), d3.json("./assets/fewer-capitals.geojson")])
+        Promise.all([d3.json("./assets/world.geo.json"), d3.json("./assets/fewer-capitals.geo.json")])
             .then(files => {
                 setFiles(files);
             })
@@ -152,6 +155,7 @@ const Map = props => {
         console.log(targetUnits)
         if (targetUnits.length === 0) {
             setSolved(true)
+            setTargetUnitText("")
             return
         }
         let rand = Math.floor(Math.random() * targetUnits.length)
@@ -192,14 +196,14 @@ const Map = props => {
         // map.forEach(path => console.log(path))
         d3.selectAll(".unit").
             on("click", function (d) {
-                console.log(d)
                 d3.selectAll(".unit")
                     .classed("wrong", false)
 
                 if (d.currentTarget.__data__ === currentTargetUnit) {
-                    d3.select(this).classed("previousTarget", true)
-                    handleRightAnswer()
+                    handleRightAnswerOrCheat()
                 } else {
+                    setTotalGuesses(totalGuesses + 1)
+                    setWrongGuesses(wrongGuesses + 1)
                     d3.select(this).classed("wrong", true)
                     if (d.currentTarget.__data__.properties.city) {
                         console.log(d.currentTarget.__data__.properties.city)
@@ -212,8 +216,53 @@ const Map = props => {
             })
     }, [currentTargetUnit])
 
+    function setRightAnswerOrCheatColor(node){
+        if (simulatedClick) {
+            // d3.select(nodelist._groups[0].item(i))
+            // .transition()
+            // .style("fill", "red")
+            // .transition()
+            // .delay(1500)
+            // .style("fill", "#333333")
+            d3.select(node).classed("wrong", true)
+        } else {
+            d3.select(node).classed("previousTarget", true)
+        }
+    }
 
-    function handleRightAnswer() {
+    function handleRightAnswerOrCheat() {
+
+        let nodelist = d3.selectAll(".unit")
+        for (let i = 0; i < nodelist._groups[0].length; i++) {
+            if (props.unit === "capitals") {
+                if (nodelist._groups[0].item(i).__data__.properties.city === currentTargetUnit.properties.city) {
+                    setRightAnswerOrCheatColor(nodelist._groups[0].item(i))
+                }
+            } else if (props.unit === "countries") {
+                if (nodelist._groups[0].item(i).__data__.properties.filename === currentTargetUnit.properties.filename) {
+                    setRightAnswerOrCheatColor(nodelist._groups[0].item(i))
+                }
+            }
+        }
+
+        if (simulatedClick) {
+            // POSSIBLY ZOOM IN ON CORRECT COUNTRY IN THE FUTURE
+            // let surroundingRect = nodelist._groups[0][pathIndex].getBoundingClientRect();
+            // let x = surroundingRect.right - ((surroundingRect.right - surroundingRect.width) / 2);
+            // let y = surroundingRect.bottom - ((surroundingRect.bottom - surroundingRect.height) / 2);
+            // console.log(nodelist._groups[0][pathIndex])
+            // window.scroll(x, y)
+            setWrongGuesses(wrongGuesses + 1)
+            if (props.unit === "capitals") {
+                setRightOrWrongText(`${currentTargetUnit.properties.city} is here!`)
+            } else if (props.unit === "countries") {
+                setRightOrWrongText(`${currentTargetUnit.properties.admin} is here!`)
+            }
+        } else {
+            setRightOrWrongText(`Correct!`)
+        }
+
+        
         let index = targetUnits.indexOf(currentTargetUnit)
 
         let updatedArr = []
@@ -222,38 +271,25 @@ const Map = props => {
                 updatedArr.push(targetUnits[unit])
             }
         }
-
-        setRightOrWrongText(`Correct!`)
-
+        setTotalGuesses(totalGuesses + 1)
+        setSimulatedClick(false)
+        setTargetUnits(updatedArr)
     }
 
-    function simulateClick() {
+    useEffect(() => {
+        if (simulatedClick === false) return
 
-        // for each index in the nodelist, if the properties are equal to the properties of currentTargetUnit, simulate a click on the path of that node
-
-        let nodelist = d3.selectAll(".unit")
-        for (let i = 0; i < nodelist._groups[0].length; i++) {
-            if (nodelist._groups[0].item(i).__data__.properties.filename === currentTargetUnit.properties.filename) {
-                console.log(nodelist._groups[0][i])
-                // logs the correct svg path element
-                // nodelist._groups[0][i].click()
-                // logs TypeError: nodelist._groups[0][i].click is not a function
-            }
-        }
-    }
-
-    // function selectUnit(targetUnits) {
-
-
-
-
+        handleRightAnswerOrCheat()
+    }, [simulatedClick])
 
     return (
         <div>
             <article className="fixed">
                 <h4>{targetUnitText}</h4>
-                <h4>{(solved ? `Solved it in ${time} seconds!` : time)}</h4>
-                <button onClick={simulateClick}>Teach me</button>
+                <h4>{(solved ? `You got ${(totalGuesses - wrongGuesses)}/${props.numProblems} correct in ${time} seconds!` : time)}</h4>
+                {solved ? null :
+                    <button onClick={() => setSimulatedClick(true)}>Teach me</button>
+                }
                 <h4>{rightOrWrongText}</h4>
             </article>
             <svg
