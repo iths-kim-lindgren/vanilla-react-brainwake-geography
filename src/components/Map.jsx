@@ -42,21 +42,22 @@ const Map = props => {
         // .scale(150)
         .scale(250)
     // .center()
-
     // geocentroid
-
-
-
 
     // CREATE PATH
     var path = d3.geoPath()
         .projection(projection)
 
     useEffect(() => {
-        const interval = setInterval(() => {
+        var interval = setInterval(() => {
             setTime(time => time + 1)
         }, 1000);
+        if (solved){
+            clearInterval(interval)
+        }
+
         return () => clearInterval(interval);
+
     }, [solved]);
 
     useEffect(() => {
@@ -86,7 +87,6 @@ const Map = props => {
 
     useEffect(() => {
         if (!files) return
-        console.log(props)
 
         // RENDER COUNTRIES AND CITIES, OR JUST COUNTRIES
         if (props.unit == "countries") {
@@ -96,10 +96,7 @@ const Map = props => {
         } else if (props.unit === "capitals") {
             let topology = topojson.topology({ foo: files[0], bar: files[1] });
             let countries = topojson.feature(topology, topology.objects.foo).features
-            console.log(topojson.feature(topology, topology.objects.bar).features[0].properties.continent)
             let cities = topology.objects.bar.geometries.filter(feature => feature.properties.continent.includes(props.continent))
-            console.log(cities)
-            // let cities = topojson.feature(topology, topology.objects.bar).features
             setActualData(d3.merge([countries, cities]))
         }
     }, [files])
@@ -107,7 +104,6 @@ const Map = props => {
     useEffect(() => {
         // SELECT COUNTRIES OR CITIES AS TARGETS
         if (!actualData) return
-        console.log(actualData)
         if (actualData.find(el => el.properties.city)) {
             let cities = actualData.filter(function (city) {
                 if (city.properties.city && city.properties.continent) {
@@ -115,7 +111,6 @@ const Map = props => {
                 }
             })
             // cities = cities.filter = (city => city.properties.continent === props.continent)
-            console.log(cities)
             setCountriesOrCities(cities)
         } else {
             let countries = actualData.filter(country => country.properties.continent.includes(props.continent)) /* to be filtered */
@@ -152,14 +147,12 @@ const Map = props => {
 
     useEffect(() => {
         if (!targetUnits) return
-        console.log(targetUnits)
         if (targetUnits.length === 0) {
             setSolved(true)
             setTargetUnitText("")
             return
         }
         let rand = Math.floor(Math.random() * targetUnits.length)
-        console.log(targetUnits)
         for (let unit in targetUnits) {
             // targetUnits[unit].target = false
             if (+unit === rand) {
@@ -193,7 +186,6 @@ const Map = props => {
         if (!currentTargetUnit) return
 
         // for the "d.currentTarget__data__" that matches currentTargetUnit, set up a new useState var
-        // map.forEach(path => console.log(path))
         d3.selectAll(".unit").
             on("click", function (d) {
                 d3.selectAll(".unit")
@@ -206,10 +198,8 @@ const Map = props => {
                     setWrongGuesses(wrongGuesses + 1)
                     d3.select(this).classed("wrong", true)
                     if (d.currentTarget.__data__.properties.city) {
-                        console.log(d.currentTarget.__data__.properties.city)
                         setRightOrWrongText(`You clicked on ${d.currentTarget.__data__.properties.city} (${d.currentTarget.__data__.properties.country})`)
                     } else {
-                        console.log(d.currentTarget.__data__.properties.admin)
                         setRightOrWrongText(`You clicked on ${d.currentTarget.__data__.properties.admin}`)
                     }
                 }
